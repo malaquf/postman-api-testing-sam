@@ -1,5 +1,5 @@
 # postman-api-testing-sam
-[![SAM build & validate](https://github.com/malaquf/postman-api-testing-sam/actions/workflows/build.yml/badge.svg)](https://github.com/malaquf/postman-api-testing-sam/actions/workflows/build.yml)
+[![SAM build & validate](https://github.com/malaquf/postman-api-testing-sam/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/malaquf/postman-api-testing-sam/actions/workflows/build.yml)
 
 This project contains source code and supporting files for a serverless application that you can deploy with the AWS Serverless Application Model (AWS SAM) command line interface (CLI). It includes the following files and folders:
 
