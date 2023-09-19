@@ -22,15 +22,17 @@ export const handler = async function run() {
   log.info("Started api testing handler");
   await downloadAssets();
   const runSummary = await runTests().catch(async (reason) => {
-    await updateMetricOnFailure();
+    await updateMetric(false);
     throw reason;
   });
 
   const success = runSummary.run.failures.length == 0 && !runSummary.error;
   if (!success) {
     await uploadReports();
-    await updateMetricOnFailure();
   }
+
+  await updateMetric(success);
+
   const response = createResponse(success);
   fs.rmSync(tmpDir, { recursive: true, force: true });
   log.info("Finished api testing handler.");
@@ -188,7 +190,8 @@ async function uploadReport(file: string, key: string) {
     .then(() => log.debug("Report uploaded."));
 }
 
-async function updateMetricOnFailure() {
+async function updateMetric(success: boolean) {
+  const value = success ? 0 : 1;
   const metricName = process.env.METRIC_NAME;
   const metricNamespace = process.env.METRIC_NAMESPACE;
   if (!metricName || !metricNamespace) {
@@ -203,7 +206,7 @@ async function updateMetricOnFailure() {
           MetricName: metricName,
           Unit: "Count",
           Timestamp: new Date(),
-          Value: 1,
+          Value: value,
         },
       ],
       Namespace: metricNamespace,
