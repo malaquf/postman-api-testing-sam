@@ -12,11 +12,12 @@ import {
 } from "@aws-sdk/client-secrets-manager";
 import NodeCache from "node-cache";
 
-const s3 = new S3({ region: process.env.REGION });
+const s3 = new S3({ region: process.env.AWS_REGION });
 
 const tmpDir = "/tmp";
 const junitReportFilename = `${tmpDir}/newman/smoketest-junit-report.xml`;
 const htmlExtraReportFilename = `${tmpDir}/newman/smoketest-htmlextra-report.html`;
+const { flatten } = require('safe-flat')
 
 export const handler = async function run() {
   log.info("Started api testing handler");
@@ -34,7 +35,7 @@ export const handler = async function run() {
   await updateMetric(success);
 
   const response = createResponse(success);
-  fs.rmSync(tmpDir, { recursive: true, force: true });
+
   log.info("Finished api testing handler.");
   return response;
 };
@@ -53,8 +54,8 @@ async function getAsset(fileName: string) {
   if (fileName === undefined) {
     return;
   }
-  const s3Path = process.env.S3_DESTINATION_PREFIX + fileName;
-  log.debug(`Retrieving object: ${process.env.S3_BUCKET_NAME}/${s3Path}`);
+  const s3Path = `${process.env.S3_DESTINATION_PREFIX}/${fileName}`;
+  log.info(`Retrieving object: ${process.env.S3_BUCKET_NAME}/${s3Path}`);
   await s3
     .getObject({
       Bucket: process.env.S3_BUCKET_NAME!,
@@ -129,15 +130,17 @@ async function getEnvVars(): Promise<{ value: any; key: string }[]> {
     log.debug(`Loading secrets with SecretId ${process.env.SECRET_ID}`);
     const secret = await retrieveSecret(process.env.SECRET_ID);
     if (secret) {
-      const flattenedSecrets = require("flat")(JSON.parse(secret));
+      const flattenedSecrets = flatten(JSON.parse(secret));
       const secretsMap = new Map<string, string>(
         Object.entries(flattenedSecrets)
       );
-      const secretKeys = JSON.parse(process.env.SECRET_KEYS!);
-      secretKeys.keys.forEach((key: string) => {
-        log.debug(`Loading secret ${key}`);
-        const secretValue = secretsMap.get(key);
-        envVar.push({ key: key, value: secretValue });
+      const secretKeys = process.env.SECRET_KEYS!.split(",");
+      secretKeys.forEach((key: string) => {
+        if (key) {
+          log.debug(`Loading secret ${key}`);
+          const secretValue = secretsMap.get(key);
+          envVar.push({ key: key, value: secretValue });
+        }
       });
     } else {
       log.warn("No secrets found.");
@@ -163,11 +166,13 @@ async function getEnvVars(): Promise<{ value: any; key: string }[]> {
 async function uploadReports(): Promise<string> {
   log.info("Uploading reports.");
 
-  const keyPath =
-    process.env.REPORTS_PREFIX! +
+  const keyPath = 
+    process.env.REPORTS_FOLDER! +
+    '/' +
     process.env.S3_DESTINATION_PREFIX +
+    '/' +
     new Date().toISOString() +
-    "/";
+    '/';
   const tmpReportsPath = `${tmpDir}/newman/`;
 
   const files = fs.readdirSync(tmpReportsPath);
