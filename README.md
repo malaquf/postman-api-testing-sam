@@ -1,6 +1,8 @@
 # postman-api-testing-sam
 [![SAM build & validate](https://github.com/malaquf/postman-api-testing-sam/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/malaquf/postman-api-testing-sam/actions/workflows/build.yml)
 
+Infrastructure example for scheduled tests in AWS created for [this article](https://medium.com/p/19671824a66f).
+
 This project contains source code and supporting files for a serverless application that you can deploy with the AWS Serverless Application Model (AWS SAM) command line interface (CLI). It includes the following files and folders:
 
 - `src` - Code for the application's Lambda function.
